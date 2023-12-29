@@ -1,0 +1,4 @@
+PyQT5
+yt-dlp
+pyqt5-tools
+pyqt5-stubs

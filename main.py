@@ -1,7 +1,10 @@
+import datetime
 import sys
+from urllib.request import urlopen
 from pprint import pprint
 
 import yt_dlp
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QDialog, QTableWidgetItem, QListWidgetItem
 
 from ui.app import Ui_MainWindow
@@ -19,6 +22,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.settingsBtn.clicked.connect(self.settings_open)
         self.continueBtn.clicked.connect(self.parse_video_info)
         self.saveBtn.clicked.connect(self.download_video)
+        self.urlInput.setFocus()
 
         self.load_history()
 
@@ -46,7 +50,23 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         with yt_dlp.YoutubeDL() as ydl:
             info = ydl.extract_info(url, download=False)
             self.downloadProgress.setValue(90)
+
             pprint(info)
+            # parse main info
+            preview_pixmap = QPixmap()
+            with urlopen(url) as picUrl:
+                preview_pixmap.loadFromData(picUrl.read())
+            self.previewPic.setPixmap(preview_pixmap)
+            self.videoName.setText(info['title'])
+            self.videoName.setToolTip(info['description'])
+            self.channelText.setText(f'<a href="{self.urlInput.text()}">{info["channel"]}</a>')
+            self.subscribersText.setText(info['channel_follower_count'])
+            self.verifiedTick.setVisible(info['channel_is_verified'])
+            self.commentsText.setText(info['comment_count'])
+            self.durationText.setText(info['duration_string'])
+            self.dateText.setText(datetime.time)
+
+            # parse table
             formats = info['formats']
             columns = [
                 'format_id', 'ext', 'resolution', 'fps', 'filesize', 'filesize_approx', 'tbr',

@@ -138,7 +138,80 @@
                </spacer>
               </item>
               <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_16">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="label_14">
+                  <property name="maximumSize">
+                   <size>
+                    <width>18</width>
+                    <height>18</height>
+                   </size>
+                  </property>
+                  <property name="pixmap">
+                   <pixmap>../icons/round_timer_white_18dp.png</pixmap>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="durationText">
+                  <property name="font">
+                   <font>
+                    <pointsize>10</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>длительность</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_15">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="label_13">
+                  <property name="maximumSize">
+                   <size>
+                    <width>18</width>
+                    <height>18</height>
+                   </size>
+                  </property>
+                  <property name="pixmap">
+                   <pixmap>../icons/round_today_white_18dp.png</pixmap>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dateText">
+                  <property name="font">
+                   <font>
+                    <pointsize>10</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>опубликовано</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
                <layout class="QHBoxLayout" name="horizontalLayout_10">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
                 <item>
                  <widget class="QLabel" name="label_2">
                   <property name="maximumSize">
@@ -146,9 +219,6 @@
                     <width>18</width>
                     <height>18</height>
                    </size>
-                  </property>
-                  <property name="text">
-                   <string/>
                   </property>
                   <property name="pixmap">
                    <pixmap>../icons/round_visibility_white_18dp.png</pixmap>
@@ -174,6 +244,9 @@
               </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_11">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
                 <item>
                  <widget class="QLabel" name="label_4">
                   <property name="maximumSize">
@@ -181,9 +254,6 @@
                     <width>18</width>
                     <height>18</height>
                    </size>
-                  </property>
-                  <property name="text">
-                   <string/>
                   </property>
                   <property name="pixmap">
                    <pixmap>../icons/round_thumb_up_white_18dp.png</pixmap>
@@ -208,7 +278,45 @@
                </layout>
               </item>
               <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_14">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="label_12">
+                  <property name="maximumSize">
+                   <size>
+                    <width>18</width>
+                    <height>18</height>
+                   </size>
+                  </property>
+                  <property name="pixmap">
+                   <pixmap>../icons/round_question_answer_white_18dp.png</pixmap>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="commentsText">
+                  <property name="font">
+                   <font>
+                    <pointsize>10</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>комментариев</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                <property name="spacing">
+                 <number>6</number>
+                </property>
                 <item>
                  <widget class="QLabel" name="label_10">
                   <property name="maximumSize">
@@ -226,31 +334,45 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="label_6">
-                  <property name="font">
-                   <font>
-                    <pointsize>11</pointsize>
-                    <bold>true</bold>
-                   </font>
+                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                  <property name="spacing">
+                   <number>2</number>
                   </property>
-                  <property name="text">
-                   <string>Канал</string>
-                  </property>
-                 </widget>
+                  <item>
+                   <widget class="QLabel" name="channelText">
+                    <property name="font">
+                     <font>
+                      <pointsize>11</pointsize>
+                      <bold>true</bold>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>Канал</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="verifiedTick">
+                    <property name="maximumSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="pixmap">
+                     <pixmap>../icons/round_verified_white_18dp.png</pixmap>
+                    </property>
+                    <property name="scaledContents">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                 <item>
-                 <widget class="QLabel" name="label_9">
-                  <property name="maximumSize">
-                   <size>
-                    <width>16</width>
-                    <height>16</height>
-                   </size>
-                  </property>
-                  <property name="pixmap">
-                   <pixmap>../icons/round_verified_white_18dp.png</pixmap>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>true</bool>
+                 <widget class="QLabel" name="subscribersText">
+                  <property name="text">
+                   <string>0 млн подп.</string>
                   </property>
                  </widget>
                 </item>
@@ -301,7 +423,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_2">
+               <widget class="QComboBox" name="qualityBox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -337,7 +459,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox">
+               <widget class="QComboBox" name="soundBox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -528,6 +650,18 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <tabstops>
+  <tabstop>urlInput</tabstop>
+  <tabstop>continueBtn</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>qualityBox</tabstop>
+  <tabstop>soundBox</tabstop>
+  <tabstop>savePath</tabstop>
+  <tabstop>saveBtn</tabstop>
+  <tabstop>settingsBtn</tabstop>
+  <tabstop>historyList</tabstop>
+  <tabstop>qualityTable</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

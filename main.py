@@ -49,44 +49,50 @@ class MyWidget(QMainWindow, Ui_MainWindow):
         self.downloadProgress.setValue(10)
         with yt_dlp.YoutubeDL() as ydl:
             info = ydl.extract_info(url, download=False)
-            self.downloadProgress.setValue(90)
+        self.downloadProgress.setValue(90)
 
-            pprint(info)
-            # parse main info
-            preview_pixmap = QPixmap()
-            with urlopen(url) as picUrl:
-                preview_pixmap.loadFromData(picUrl.read())
-            self.previewPic.setPixmap(preview_pixmap)
-            self.videoName.setText(info['title'])
-            self.videoName.setToolTip(info['description'])
-            self.channelText.setText(f'<a href="{self.urlInput.text()}">{info["channel"]}</a>')
-            self.subscribersText.setText(info['channel_follower_count'])
-            self.verifiedTick.setVisible(info['channel_is_verified'])
-            self.commentsText.setText(info['comment_count'])
-            self.durationText.setText(info['duration_string'])
-            self.dateText.setText(datetime.time)
+        pprint(info)
 
-            # parse table
-            formats = info['formats']
-            columns = [
-                'format_id', 'ext', 'resolution', 'fps', 'filesize', 'filesize_approx', 'tbr',
-                'vcodec', 'vbr',
-                'audio_channels', 'acodec', 'abr', 'asr',
-                'format', 'format_note', 'dynamic_range', 'url'
-            ]
-            pprint(columns)
+        # parse table
+        formats = info['formats']
+        columns = [
+            'format_id', 'ext', 'resolution', 'fps', 'filesize', 'filesize_approx', 'tbr',
+            'vcodec', 'vbr',
+            'audio_channels', 'acodec', 'abr', 'asr',
+            'format', 'format_note', 'dynamic_range', 'url'
+        ]
+        pprint(columns)
 
-            self.qualityTable.setColumnCount(len(columns))
-            self.qualityTable.setHorizontalHeaderLabels(columns)
-            self.qualityTable.setRowCount(len(formats))
-            for i, row in enumerate(formats):
-                print(row)
-                for j, column in enumerate(columns):
-                    print(column)
-                    self.qualityTable.setItem(i, j, QTableWidgetItem(str(row.get(column, 'aboba'))))
-            self.downloadProgress.setValue(0)
-
+        self.qualityTable.setColumnCount(len(columns))
+        self.qualityTable.setHorizontalHeaderLabels(columns)
+        self.qualityTable.setRowCount(len(formats))
+        for i, row in enumerate(formats):
+            print(row)
+            for j, column in enumerate(columns):
+                print(column)
+                self.qualityTable.setItem(i, j, QTableWidgetItem(str(row.get(column, '') or '')))
         self.qualityTable.resizeColumnsToContents()
+
+        # parse main info
+        preview_pixmap = QPixmap()
+        with urlopen(info['thumbnail']) as picUrl:
+            preview_pixmap.loadFromData(picUrl.read())
+        self.previewPic.setPixmap(preview_pixmap)
+        self.videoName.setText(info['title'])
+        self.videoName.setToolTip(info['description'])
+        self.channelText.setText(f'<a href="{info["uploader_url"]}">{info["channel"]}</a>')
+        self.subscribersText.setText(str(info['channel_follower_count']) + ' подписчиков')
+        self.verifiedTick.setVisible(info['channel_is_verified'])
+        self.commentsText.setText(str(info['comment_count']))
+        self.durationText.setText(info['duration_string'])
+        self.dateText.setText(info['upload_date'])
+        self.viewsText.setText(str(info['view_count']))
+        qualities = list(set(i['format_note'] for i in formats if 'format_note' in i and i['format_note'][-1] == 'p'))
+        qualities.sort(key=lambda x: int(x[0:-1]))
+        self.qualityBox.clear()
+        self.qualityBox.addItems(qualities)
+
+        self.downloadProgress.setValue(0)
 
     def download_video(self):
         self.downloadProgress.setValue(0)

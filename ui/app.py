@@ -183,6 +183,7 @@ class Ui_MainWindow(object):
         font.setPointSize(11)
         font.setBold(True)
         self.channelText.setFont(font)
+        self.channelText.setOpenExternalLinks(True)
         self.channelText.setObjectName("channelText")
         self.horizontalLayout_6.addWidget(self.channelText)
         self.verifiedTick = QtWidgets.QLabel(parent=self.autoMode)

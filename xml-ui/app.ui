@@ -349,6 +349,9 @@
                     <property name="text">
                      <string>Канал</string>
                     </property>
+                    <property name="openExternalLinks">
+                     <bool>true</bool>
+                    </property>
                    </widget>
                   </item>
                   <item>

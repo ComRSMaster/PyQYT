@@ -1,12 +1,13 @@
 import sys
 import webbrowser
 from dataclasses import dataclass
-from threading import Thread
+from http.client import IncompleteRead
 from typing import Optional, Any
 from urllib.request import urlopen
 from pprint import pprint
 
 import yt_dlp
+from PyQt6.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QDialog, QTableWidgetItem, QListWidgetItem, QFileDialog
 
@@ -31,19 +32,60 @@ class Video:
     channel: str
     duration: str
     url: str
-    quality: Optional[Any] = None
+    quality: Optional[str] = None
     thumbnail: Optional[Any] = None
+    path: Optional[str] = None
+
+
+class DownloadWorker(QObject):
+    progress = pyqtSignal(dict)
+    load_info_finished = pyqtSignal(dict)
+    download_finished = pyqtSignal()
+
+    @pyqtSlot(str)
+    def load_info(self, url):
+        with yt_dlp.YoutubeDL() as ydl:
+            for i in range(5):
+                try:
+                    info = ydl.extract_info(url, download=False)
+                    break
+                except IncompleteRead:
+                    # try again 5 attempts
+                    pass
+        self.load_info_finished.emit(info)
+
+    @pyqtSlot(dict, str)
+    def download(self, options, url):
+        options['progress_hooks'] = [lambda d: self.progress.emit(d)]
+        options['postprocessor_hooks'] = [lambda d: self.progress.emit(d)]
+        with yt_dlp.YoutubeDL(options) as ydl:
+            ydl.download([url])
+        self.download_finished.emit()
+
+
+
+def open_downloaded_video(path: str):
+    webbrowser.open(path)
+    # subprocess.run(['open', path], check=True)
+
+
+def settings_open():
+    dialog = SettingsWidget()
+    dialog.show()
+    dialog.exec()
 
 
 class MainWidget(QMainWindow, Ui_MainWindow):
     current_video: Video
     current_formats: list[dict]
+    download_requested = pyqtSignal(dict, str)
+    load_info_requested = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
         self.setupUi(self)
 
-        self.settingsBtn.clicked.connect(self.settings_open)
+        self.settingsBtn.clicked.connect(settings_open)
         self.continueBtn.clicked.connect(self.parse_video_info)
         self.saveBtn.clicked.connect(self.download_video)
         self.folderSelectBtn.clicked.connect(self.select_download_folder)
@@ -68,6 +110,16 @@ class MainWidget(QMainWindow, Ui_MainWindow):
 
         self.load_history()
 
+        self.worker_thread = QThread()
+        self.worker = DownloadWorker()
+        self.worker.progress.connect(self.download_progress)
+        self.worker.load_info_finished.connect(self.parse_video_info_finished)
+        self.worker.download_finished.connect(self.download_finished)
+        self.worker.moveToThread(self.worker_thread)
+        self.download_requested.connect(self.worker.download)
+        self.load_info_requested.connect(self.worker.load_info)
+        self.worker_thread.start()
+
     def select_download_folder(self):
         self.savePath.setText(QFileDialog.getExistingDirectory(
             self, "Выберите папку для сохранения", self.savePath.text()) or self.savePath.text())
@@ -77,6 +129,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         cur.execute("SELECT id, name, channel, duration, url, path, quality FROM history ORDER BY id DESC")
         history = cur.fetchall()
 
+        self.historyList.clear()
         for v_id, name, channel, duration, url, path, quality in history:
             item = QListWidgetItem(self.historyList)
             self.historyList.addItem(item)
@@ -86,27 +139,26 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             item.setSizeHint(row.minimumSizeHint())
 
             self.historyList.setItemWidget(item, row)
-            self.historyList.clicked.connect(lambda: self.open_downloaded_video(path))
+            self.historyList.clicked.connect(lambda: open_downloaded_video(path))
 
     def parse_video_info(self):
         self.continueBtn.setDisabled(True)
-        url = self.urlInput.text()
-
         self.downloadProgress.setValue(10)
-        with yt_dlp.YoutubeDL() as ydl:
-            info = ydl.extract_info(url, download=False)
-        self.downloadProgress.setValue(90)
+
+        self.load_info_requested.emit(self.urlInput.text())
+
+    def parse_video_info_finished(self, info):
+        url = self.urlInput.text()
         pprint(info)
 
         self.current_video = Video(info['title'], info['channel'], info['duration_string'], url, f"{info['height']}p")
 
         self.savePath.setEnabled(True)
-        self.folderSelectBtn.setEnabled(True)
         self.saveBtn.setEnabled(True)
+        self.folderSelectBtn.setEnabled(True)
 
         # parse table
         self.current_formats = info['formats']
-        pprint(info_columns)
 
         self.qualityTable.setColumnCount(len(info_columns))
         self.qualityTable.setHorizontalHeaderLabels(info_columns)
@@ -138,33 +190,16 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.qualityBox.addItems(qualities)
         self.qualityBox.setCurrentIndex(len(qualities) - 1)
 
-        self.downloadProgress.setValue(0)
         self.continueBtn.setEnabled(True)
-
-    def open_downloaded_video(self, path: str):
-        webbrowser.open(path)
-        # subprocess.run(['open', path], check=True)
+        self.downloadProgress.setValue(0)
 
     def download_video(self):
-        cur = self.conn.cursor()
-        cur.execute("INSERT INTO history(name, channel, duration, url, path, quality) VALUES (?,?,?,?,?,?)",
-                    (self.current_video.name, self.current_video.channel, self.current_video.duration,
-                     self.current_video.url, self.savePath.text(), self.qualityBox.currentText()))
-        self.conn.commit()
-        with open(Path.cwd() / 'data' / 'previews' / f'{cur.lastrowid}.webp', 'wb') as thumb:
-            thumb.write(self.current_video.thumbnail)
-        self.load_history()
-
-        Thread(target=self.download_video_thread).start()
-
-    def download_video_thread(self):
         self.saveBtn.setEnabled(False)
         self.downloadProgress.setValue(0)
 
         options = {
             'ffmpeg_location': str(Path.cwd() / 'bin'),
-            'progress_hooks': [self.download_progress],
-            'outtmpl': self.savePath.text().removesuffix('/') + '/'
+            'outtmpl': str(Path(self.savePath.text()) / '%(title)s - %(height)sp.%(ext)s')
         }
 
         if self.tabWidget.currentIndex() == 0:
@@ -179,34 +214,45 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             options['format'] = self.current_formats[self.qualityTable.currentRow()]['format_id']
 
         if self.formatBox.currentIndex() != 0:
-            options['postprocessors'] = [{
-                'key': 'FFmpegVideoConvertor',
-                'preferedformat': self.formatBox.currentText()
-            }]
+            # options['postprocessors'] = [{
+            #     'key': 'FFmpegVideoConvertor',
+            #     'preferedformat': self.formatBox.currentText()
+            # }]
+            options['final_ext'] = self.formatBox.currentText()
 
-        with yt_dlp.YoutubeDL(options) as ydl:
-            ydl.download([self.current_video.url])
+        self.download_requested.emit(options, self.current_video.url)
+
+    def download_finished(self):
+        print('download_finished')
+        self.saveBtn.setEnabled(True)
+        self.statusbar.showMessage('Скачано', 0)
+        self.downloadProgress.setValue(0)
+
+        cur = self.conn.cursor()
+        cur.execute("INSERT INTO history(name, channel, duration, url, path, quality) VALUES (?,?,?,?,?,?)",
+                    (self.current_video.name, self.current_video.channel, self.current_video.duration,
+                     self.current_video.url, self.current_video.path,
+                     self.qualityBox.currentText()))
+        self.conn.commit()
+        with open(Path.cwd() / 'data' / 'previews' / f'{cur.lastrowid}.webp', 'wb') as thumb:
+            thumb.write(self.current_video.thumbnail)
+        self.load_history()
+
 
     def download_progress(self, d):
         # pprint(d)
-        # print(d['status'])
+        print(d['status'])
         if d['status'] == 'finished':
+            self.current_video.path = d['info_dict'].get('filepath') or d['info_dict']['filename']
             pprint(d)
-            self.saveBtn.setEnabled(True)
-            self.statusbar.clearMessage()
-            self.downloadProgress.setValue(0)
+            print('finished download_progress')
 
-        elif d['status'] == 'downloading':
+        elif d['status'] == 'downloading' or d['status'] == 'processing':
             p = d['_percent_str']
             p = p.replace('%', '')
             self.downloadProgress.setValue(int(float(p)))
             self.downloadSpeed.setText(d['_speed_str'])
             self.statusbar.showMessage(f"Осталось {d['eta'] or ''} сек.")
-
-    def settings_open(self):
-        dialog = SettingsWidget()
-        dialog.show()
-        dialog.exec()
 
 
 class SettingsWidget(QDialog, Ui_Settings):

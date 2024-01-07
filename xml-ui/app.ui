@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1367</width>
-    <height>918</height>
+    <width>1710</width>
+    <height>956</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,7 +64,7 @@
              <string>Введите URL или название видео</string>
             </property>
             <property name="placeholderText">
-             <string>Введите URL или название видео</string>
+             <string>Введите URL видео</string>
             </property>
            </widget>
           </item>
@@ -94,9 +94,6 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
-              </property>
-              <property name="pixmap">
-               <pixmap>../img_1.png</pixmap>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -237,41 +234,6 @@
                   </property>
                   <property name="text">
                    <string>просмотров</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_11">
-                <property name="spacing">
-                 <number>6</number>
-                </property>
-                <item>
-                 <widget class="QLabel" name="label_4">
-                  <property name="maximumSize">
-                   <size>
-                    <width>18</width>
-                    <height>18</height>
-                   </size>
-                  </property>
-                  <property name="pixmap">
-                   <pixmap>../icons/round_thumb_up_white_18dp.png</pixmap>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="likesText">
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>лайков</string>
                   </property>
                  </widget>
                 </item>
@@ -469,6 +431,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
                 <property name="placeholderText">
                  <string>Звук</string>
                 </property>
@@ -485,6 +450,63 @@
                 <item>
                  <property name="text">
                   <string>Только видео</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Формат:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="formatBox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+                <property name="currentIndex">
+                 <number>1</number>
+                </property>
+                <property name="placeholderText">
+                 <string>Звук</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Исходный</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>mp4</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>webm</string>
                  </property>
                 </item>
                </widget>
@@ -535,71 +557,6 @@
               <attribute name="verticalHeaderVisible">
                <bool>false</bool>
               </attribute>
-              <row>
-               <property name="text">
-                <string>Новая строка</string>
-               </property>
-              </row>
-              <row>
-               <property name="text">
-                <string>Новая строка</string>
-               </property>
-              </row>
-              <row>
-               <property name="text">
-                <string>Новая строка</string>
-               </property>
-              </row>
-              <row>
-               <property name="text">
-                <string>Новая строка</string>
-               </property>
-              </row>
-              <row>
-               <property name="text">
-                <string>Новая строка</string>
-               </property>
-              </row>
-              <row>
-               <property name="text">
-                <string>Новая строка</string>
-               </property>
-              </row>
-              <column>
-               <property name="text">
-                <string>Новый столбец</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Новый столбец</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Новый столбец</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Новый столбец</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Новый столбец</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Новый столбец</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Новый столбец</string>
-               </property>
-              </column>
              </widget>
             </item>
            </layout>
@@ -610,13 +567,30 @@
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
            <widget class="QLineEdit" name="savePath">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="placeholderText">
              <string>Куда сохранить файл?</string>
             </property>
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="folderSelectBtn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../icons/round_folder_open_white_18dp.png</normaloff>../icons/round_folder_open_white_18dp.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="saveBtn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Скачать</string>
             </property>

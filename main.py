@@ -1,5 +1,5 @@
+import subprocess
 import sys
-import webbrowser
 from dataclasses import dataclass
 from http.client import IncompleteRead
 from typing import Optional, Any
@@ -9,19 +9,18 @@ from pprint import pprint
 import yt_dlp
 from PyQt6.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QDialog, QTableWidgetItem, QListWidgetItem, QFileDialog
+from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QListWidgetItem, QFileDialog, \
+    QMessageBox
 
 from ui.app import Ui_MainWindow
 from ui.historyitem import Ui_HistoryItem
-from ui.settings import Ui_Dialog as Ui_Settings
 from pathlib import Path
 
 import sqlite3
 
 info_columns = [
     'format_id', 'ext', 'resolution', 'fps', 'filesize', 'filesize_approx', 'tbr',
-    'vcodec', 'vbr',
-    'audio_channels', 'acodec', 'abr', 'asr',
+    'vcodec', 'vbr', 'audio_channels', 'acodec', 'abr', 'asr',
     'format', 'format_note', 'dynamic_range', 'url'
 ]
 
@@ -45,13 +44,10 @@ class DownloadWorker(QObject):
     @pyqtSlot(str)
     def load_info(self, url):
         with yt_dlp.YoutubeDL() as ydl:
-            for i in range(5):
-                try:
-                    info = ydl.extract_info(url, download=False)
-                    break
-                except IncompleteRead:
-                    # try again 5 attempts
-                    pass
+            try:
+                info = ydl.extract_info(url, download=False)
+            except yt_dlp.utils.DownloadError as e:
+                QMessageBox.critical(ex.previewPic, "Ошибка", e.msg)
         self.load_info_finished.emit(info)
 
     @pyqtSlot(dict, str)
@@ -63,16 +59,8 @@ class DownloadWorker(QObject):
         self.download_finished.emit()
 
 
-
 def open_downloaded_video(path: str):
-    webbrowser.open(path)
-    # subprocess.run(['open', path], check=True)
-
-
-def settings_open():
-    dialog = SettingsWidget()
-    dialog.show()
-    dialog.exec()
+    subprocess.run(['open', path], check=True)
 
 
 class MainWidget(QMainWindow, Ui_MainWindow):
@@ -85,13 +73,12 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
 
-        self.settingsBtn.clicked.connect(settings_open)
         self.continueBtn.clicked.connect(self.parse_video_info)
         self.saveBtn.clicked.connect(self.download_video)
         self.folderSelectBtn.clicked.connect(self.select_download_folder)
         self.savePath.setText(str(Path.home() / "Downloads"))
         self.urlInput.setFocus()
-        self.urlInput.setText("https://youtu.be/Lfo29TGB8DQ")
+        self.soundBox.currentIndexChanged.connect(self.sound_formats_changed)
 
         Path.mkdir(Path.cwd() / 'data' / 'previews', parents=True, exist_ok=True)
         self.conn = sqlite3.connect("data/main.db")
@@ -132,6 +119,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.historyList.clear()
         for v_id, name, channel, duration, url, path, quality in history:
             item = QListWidgetItem(self.historyList)
+            item.setToolTip(path)
             self.historyList.addItem(item)
 
             row = Ui_HistoryItem(name, channel, str(Path.cwd() / 'data' / 'previews' / f'{v_id}.webp'),
@@ -139,7 +127,7 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             item.setSizeHint(row.minimumSizeHint())
 
             self.historyList.setItemWidget(item, row)
-            self.historyList.clicked.connect(lambda: open_downloaded_video(path))
+            self.historyList.itemClicked.connect(lambda x: open_downloaded_video(x.toolTip()))
 
     def parse_video_info(self):
         self.continueBtn.setDisabled(True)
@@ -151,11 +139,46 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         url = self.urlInput.text()
         pprint(info)
 
-        self.current_video = Video(info['title'], info['channel'], info['duration_string'], url, f"{info['height']}p")
+        self.current_video = Video(info['title'], info.get('uploader'),
+                                   info.get('duration_string'), url, f"{info.get('height', 0)}p")
 
         self.savePath.setEnabled(True)
         self.saveBtn.setEnabled(True)
         self.folderSelectBtn.setEnabled(True)
+
+        # parse main info
+        preview_pixmap = QPixmap()
+        with urlopen(info['thumbnail']) as picUrl:
+            for i in range(3):
+                try:
+                    self.current_video.thumbnail = picUrl.read()
+                    break
+                except IncompleteRead:
+                    # try again 3 attempts
+                    print('retrying', i)
+            preview_pixmap.loadFromData(self.current_video.thumbnail)
+        self.previewPic.setPixmap(preview_pixmap)
+        self.videoName.setText(info['title'])
+        self.videoName.setToolTip(info.get('description'))
+        self.widget_5.setVisible('uploader' in info)
+        if 'uploader_url' in info:
+            self.channelText.setText(f'<a href="{info["uploader_url"]}">{info["uploader"]}</a>')
+        else:
+            self.channelText.setText(info.get('uploader'))
+
+        self.subscribersText.setVisible('channel_follower_count' in info)
+        self.subscribersText.setText(str(info.get('channel_follower_count')) + ' подписчиков')
+        self.verifiedTick.setVisible(info.get('channel_is_verified', False))
+        self.widget_4.setVisible('comment_count' in info)
+        self.commentsText.setText(str(info.get('comment_count')))
+        self.widget_6.setVisible('duration_string' in info)
+        self.durationText.setText(info.get('duration_string'))
+        self.widget_3.setVisible('upload_date' in info)
+        self.dateText.setText(info.get('upload_date'))
+        self.widget_2.setVisible('like_count' in info)
+        self.likeText.setText(str(info.get('like_count')))
+        self.widget_1.setVisible(info.get('view_count') is not None)
+        self.viewsText.setText(str(info.get('view_count')))
 
         # parse table
         self.current_formats = info['formats']
@@ -168,23 +191,11 @@ class MainWidget(QMainWindow, Ui_MainWindow):
                 self.qualityTable.setItem(i, j, QTableWidgetItem(str(row.get(column, '') or '')))
         self.qualityTable.resizeColumnsToContents()
 
-        # parse main info
-        preview_pixmap = QPixmap()
-        with urlopen(info['thumbnail']) as picUrl:
-            self.current_video.thumbnail = picUrl.read()
-            preview_pixmap.loadFromData(self.current_video.thumbnail)
-        self.previewPic.setPixmap(preview_pixmap)
-        self.videoName.setText(info['title'])
-        self.videoName.setToolTip(info['description'])
-        self.channelText.setText(f'<a href="{info["uploader_url"]}">{info["channel"]}</a>')
-        self.subscribersText.setText(str(info['channel_follower_count']) + ' подписчиков')
-        self.verifiedTick.setVisible(info['channel_is_verified'])
-        self.commentsText.setText(str(info['comment_count']))
-        self.durationText.setText(info['duration_string'])
-        self.dateText.setText(info['upload_date'])
-        self.viewsText.setText(str(info['view_count']))
         qualities = list(set(
             i['format_note'] for i in self.current_formats if 'format_note' in i and i['format_note'][-1] == 'p'))
+        if len(qualities) == 0:
+            qualities = list(set(
+                f"{i['height']}p" for i in self.current_formats if 'height' in i and i['height'] is not None))
         qualities.sort(key=lambda x: int(x[0:-1]))
         self.qualityBox.clear()
         self.qualityBox.addItems(qualities)
@@ -199,7 +210,9 @@ class MainWidget(QMainWindow, Ui_MainWindow):
 
         options = {
             'ffmpeg_location': str(Path.cwd() / 'bin'),
-            'outtmpl': str(Path(self.savePath.text()) / '%(title)s - %(height)sp.%(ext)s')
+            'outtmpl': str(Path(self.savePath.text()) / '%(title)s - %(height)sp.%(ext)s'),
+            'default_search': 'ytsearch',
+            'noplaylist': True
         }
 
         if self.tabWidget.currentIndex() == 0:
@@ -214,11 +227,11 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             options['format'] = self.current_formats[self.qualityTable.currentRow()]['format_id']
 
         if self.formatBox.currentIndex() != 0:
-            # options['postprocessors'] = [{
-            #     'key': 'FFmpegVideoConvertor',
-            #     'preferedformat': self.formatBox.currentText()
-            # }]
-            options['final_ext'] = self.formatBox.currentText()
+            options['merge_output_format'] = self.formatBox.currentText()
+            options['postprocessors'] = [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': self.formatBox.currentText()
+            }]
 
         self.download_requested.emit(options, self.current_video.url)
 
@@ -254,11 +267,14 @@ class MainWidget(QMainWindow, Ui_MainWindow):
             self.downloadSpeed.setText(d['_speed_str'])
             self.statusbar.showMessage(f"Осталось {d['eta'] or ''} сек.")
 
-
-class SettingsWidget(QDialog, Ui_Settings):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
+    def sound_formats_changed(self, ind):
+        if ind == 1:
+            items = 'Исходный', 'mp3', 'flac', 'opus', 'wav', 'webm'
+        else:
+            items = 'Исходный', 'mp4', 'webm'
+        self.formatBox.clear()
+        self.formatBox.addItems(items)
+        self.formatBox.setCurrentIndex(1)
 
 
 if __name__ == '__main__':

@@ -136,6 +136,8 @@ class MainWidget(QMainWindow, Ui_MainWindow):
         self.load_info_requested.emit(self.urlInput.text())
 
     def parse_video_info_finished(self, info):
+        if '_type' in info and info['_type'] == 'playlist':
+            info = info['entries'][0]
         url = self.urlInput.text()
         pprint(info)
 
